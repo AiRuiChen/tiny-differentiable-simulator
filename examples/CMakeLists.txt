@@ -51,6 +51,11 @@ add_executable(opengl_imgui_test opengl_imgui_test.cpp ../third_party/dear_imgui
 target_link_libraries(opengl_imgui_test opengl_window dear_imgui  ${CMAKE_DL_LIBS})
 target_include_directories(opengl_imgui_test PRIVATE ../third_party/glad ../third_party/dear_imgui ../src)
 
+set(MESHCAT_LIBRARIES crossguid cpp_base64 zmq)
+IF (WIN32)
+    set(MESHCAT_LIBRARIES ${MESHCAT_LIBRARIES} ws2_32 Winmm iphlpapi)
+ENDIF ()
+
 IF(USE_CPPAD)
   add_executable(cuda_codegen cuda_codegen.cpp ${TDS_HDRS})
   target_compile_definitions(cuda_codegen PRIVATE -DUSE_CPPAD)
@@ -81,13 +86,35 @@ IF(USE_CPPAD)
   if (USE_STAN)
     target_link_libraries(cuda_laikago_codegen PRIVATE ${STAN_LIBRARIES})
   endif(USE_STAN)
+
+  if (pagmo_FOUND)
+    add_executable(policy_optimization policy_optimization.cpp ${TDS_HDRS})
+    target_compile_definitions(policy_optimization PRIVATE
+            -DUSE_CPPAD -DUSE_PAGMO -DUSE_CERES)
+    target_include_directories(policy_optimization PRIVATE
+            ../third_party ../third_party/nlohmann/include
+            ../third_party/pagmo2/include ../src)
+    target_link_libraries(
+      policy_optimization
+      PRIVATE
+        Pagmo::pagmo
+        ${CMAKE_DL_LIBS}
+        tinyxml2
+        opengl_window
+        ${CERES_LIBRARIES}
+        cxxopts::cxxopts
+        Eigen3::Eigen
+        differentiation
+        ${MESHCAT_LIBRARIES}
+    )
+  endif(pagmo_FOUND)
 ENDIF(USE_CPPAD)
 
 IF(USE_CERES)
 message("Ceres libs:" ${CERES_LIBRARIES})
 
-add_executable(ceres_estimation_real ceres_estimation_real.cpp ${TDS_HDRS})
-target_link_libraries(ceres_estimation_real pybullet_visualizer_api  glog::glog Eigen3::Eigen ${CMAKE_DL_LIBS}  )
+#add_executable(ceres_estimation_real ceres_estimation_real.cpp ${TDS_HDRS})
+#target_link_libraries(ceres_esmtimation_real pybullet_visualizer_api  glog::glog Eigen3::Eigen ${CMAKE_DL_LIBS}  )
 
 # We want to link against ceres-debug.lib in Debug builds and Release/ceres.lib in optimized/Release builds.
 if (WIN32)
@@ -98,9 +125,9 @@ if (WIN32)
     target_include_directories( ceres_estimation_real PRIVATE  ../third_party/glog/build_cmake/local_install/include ../third_party/ceres-solver/build_cmake/local_install/include )
 
 else(WIN32)
-    target_link_libraries(ceres_estimation_real pybullet_visualizer_api Ceres::ceres)
+#    target_link_libraries(ceres_estimation_real pybullet_visualizer_api Ceres::ceres)
 endif (WIN32)
-target_include_directories(ceres_estimation_real PRIVATE ../data/ibm-double-pendulum)
+#target_include_directories(ceres_estimation_real PRIVATE ../data/ibm-double-pendulum)
 
 IF(APPLE)
   FIND_PACKAGE(OpenGL)
@@ -133,12 +160,6 @@ target_link_libraries(opengl_test opengl_window ${CMAKE_DL_LIBS})
 add_executable(tiny_urdf_parser_example tiny_urdf_parser_example.cpp ${TDS_HDRS})
 target_link_libraries(tiny_urdf_parser_example tinyxml2)
 target_include_directories(tiny_urdf_parser_example PRIVATE ../third_party ../src)
-
-
-set(MESHCAT_LIBRARIES crossguid cpp_base64 zmq)
-IF (WIN32)
-    set(MESHCAT_LIBRARIES ${MESHCAT_LIBRARIES} ws2_32 Winmm iphlpapi)
-ENDIF ()
 
 add_executable(tiny_urdf_parser_meshcat_example tiny_urdf_parser_meshcat_example.cpp ${TDS_HDRS})
 target_link_libraries(tiny_urdf_parser_meshcat_example tinyxml2 ${MESHCAT_LIBRARIES})

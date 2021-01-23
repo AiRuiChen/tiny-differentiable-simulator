@@ -286,6 +286,7 @@ struct UrdfParser {
             std::string msg = material_m_name + " has no rgba";
             logger.report_warning(msg);
           }
+          visual.material = material;
         }
       }
     }
@@ -672,8 +673,8 @@ struct UrdfParser {
       std::map<std::string, std::string>& joint_to_parent_name,
       std::vector<std::string>& joint_to_parent_name_insertion_order,
       std::map<std::string, int>& link_name_to_index, int level) {
-    std::cout << std::string(level, '-') << link_name << "["
-              << link_name_to_index[link_name] << "]" << std::endl;
+//    std::cout << std::string(level, '-') << link_name << "["
+//              << link_name_to_index[link_name] << "]" << std::endl;
     // Iterate through the map
     for (auto at = joint_to_parent_name_insertion_order.begin();
          at != joint_to_parent_name_insertion_order.end(); at++) {
@@ -720,7 +721,7 @@ struct UrdfParser {
       xml_doc.ClearError();
       return false;
     }
-    logger.print_message("Opened XML file");
+//    logger.print_message("Opened XML file");
 
     tinyxml2::XMLElement* robot_xml = xml_doc.FirstChildElement("robot");
     if (!robot_xml) {
@@ -816,7 +817,7 @@ struct UrdfParser {
       }
     }
 
-    logger.print_message(std::string("base link=") + parent_links[0]);
+//    logger.print_message(std::string("base link=") + parent_links[0]);
     // now order joints and links
 
     urdf_structures.name_to_link_index[parent_links[0]] = -1;

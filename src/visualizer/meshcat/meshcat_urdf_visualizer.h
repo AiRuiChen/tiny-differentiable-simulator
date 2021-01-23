@@ -28,14 +28,14 @@
 #include "multi_body.hpp"
 #include "urdf/urdf_structures.hpp"
 
-inline std::string correct_non_utf_8(const std::string &str) {
+inline std::string correct_non_utf_8(const std::string& str) {
   int i, f_size = str.size();
   unsigned char c, c2, c3, c4;
   std::string to;
   to.reserve(f_size);
 
   for (i = 0; i < f_size; i++) {
-    c = (unsigned char)(str)[i];
+    c = (unsigned char) (str)[i];
     if (c < 32) {                          // control char
       if (c == 9 || c == 10 || c == 13) {  // allow only \t \n \r
         to.append(1, c);
@@ -45,7 +45,7 @@ inline std::string correct_non_utf_8(const std::string &str) {
       to.append(1, c);
       continue;
     } else if (c < 160) {  // control char (nothing should be defined here
-                           // either ASCI, ISO_8859-1 or UTF8, so skipping)
+      // either ASCI, ISO_8859-1 or UTF8, so skipping)
       if (c2 == 128) {     // fix microsoft mess, add euro
         to.append(1, 226);
         to.append(1, 130);
@@ -57,15 +57,15 @@ inline std::string correct_non_utf_8(const std::string &str) {
       }
       continue;
     } else if (c < 192) {  // invalid for UTF8, converting ASCII
-      to.append(1, (unsigned char)194);
+      to.append(1, (unsigned char) 194);
       to.append(1, c);
       continue;
     } else if (c < 194) {  // invalid for UTF8, converting ASCII
-      to.append(1, (unsigned char)195);
+      to.append(1, (unsigned char) 195);
       to.append(1, c - 64);
       continue;
     } else if (c < 224 && i + 1 < f_size) {  // possibly 2byte UTF8
-      c2 = (unsigned char)(str)[i + 1];
+      c2 = (unsigned char) (str)[i + 1];
       if (c2 > 127 && c2 < 192) {    // valid 2byte UTF8
         if (c == 194 && c2 < 160) {  // control char, skipping
           ;
@@ -77,8 +77,8 @@ inline std::string correct_non_utf_8(const std::string &str) {
         continue;
       }
     } else if (c < 240 && i + 2 < f_size) {  // possibly 3byte UTF8
-      c2 = (unsigned char)(str)[i + 1];
-      c3 = (unsigned char)(str)[i + 2];
+      c2 = (unsigned char) (str)[i + 1];
+      c3 = (unsigned char) (str)[i + 2];
       if (c2 > 127 && c2 < 192 && c3 > 127 && c3 < 192) {  // valid 3byte UTF8
         to.append(1, c);
         to.append(1, c2);
@@ -87,9 +87,9 @@ inline std::string correct_non_utf_8(const std::string &str) {
         continue;
       }
     } else if (c < 245 && i + 3 < f_size) {  // possibly 4byte UTF8
-      c2 = (unsigned char)(str)[i + 1];
-      c3 = (unsigned char)(str)[i + 2];
-      c4 = (unsigned char)(str)[i + 3];
+      c2 = (unsigned char) (str)[i + 1];
+      c3 = (unsigned char) (str)[i + 2];
+      c4 = (unsigned char) (str)[i + 3];
       if (c2 > 127 && c2 < 192 && c3 > 127 && c3 < 192 && c4 > 127 &&
           c4 < 192) {  // valid 4byte UTF8
         to.append(1, c);
@@ -102,19 +102,19 @@ inline std::string correct_non_utf_8(const std::string &str) {
     }
     // invalid UTF8, converting ASCII (c>245 || string too short for
     // multi-byte))
-    to.append(1, (unsigned char)195);
+    to.append(1, (unsigned char) 195);
     to.append(1, c - 64);
   }
   return to;
 }
 
-template <typename Algebra>
+template<typename Algebra>
 struct MeshcatUrdfVisualizer {
-    
+
   typedef ::tds::UrdfStructures<Algebra> TinyUrdfStructures;
   typedef ::tds::UrdfLink<Algebra> TinyUrdfLink;
   typedef ::tds::UrdfVisual<Algebra> UrdfVisual;
-  
+
   using Vector3 = typename Algebra::Vector3;
   using Quaternion = typename Algebra::Quaternion;
   using Matrix3x3 = typename Algebra::Matrix3;
@@ -149,31 +149,33 @@ struct MeshcatUrdfVisualizer {
     send_zmq(m_sock, del_cmd);
   }
 
-  void load_texture(const std::string &texture_path) {
+  void load_texture(const std::string& texture_path) {
     m_texture_data = texture_data_broken_robot;
 
-    FILE *fp = fopen((m_path_prefix + texture_path).c_str(), "rb");
+    FILE* fp = fopen((m_path_prefix + texture_path).c_str(), "rb");
     if (fp) {
       fseek(fp, 0, SEEK_END);
       unsigned int datasize = static_cast<unsigned int>(ftell(fp));
       fseek(fp, 0, SEEK_SET);
-      unsigned char *data = static_cast<unsigned char *>(malloc(datasize));
+      unsigned char* data = static_cast<unsigned char*>(malloc(datasize));
       if (data) {
         int bytesRead;
         bytesRead = fread(data, 1, datasize, fp);
         m_texture_data = std::string("data:image/png;base64,") +
-                         base64_encode(data, datasize);
+            base64_encode(data, datasize);
       }
       free(data);
       fclose(fp);
     }
   }
 
-  void convert_link_visuals(TinyUrdfLink &link, int link_index,
-                            bool useTextureUuid, std::vector<int>& visual_instance_uids) {
-    for (int vis_index = 0; vis_index < (int)link.urdf_visual_shapes.size();
+  void convert_link_visuals(TinyUrdfLink& link,
+                            int link_index,
+                            bool useTextureUuid,
+                            std::vector<int>& visual_instance_uids) {
+    for (int vis_index = 0; vis_index < (int) link.urdf_visual_shapes.size();
          vis_index++) {
-      UrdfVisual &v =
+      UrdfVisual& v =
           link.urdf_visual_shapes[vis_index];
 
       printf("v.geom_type=%d", v.geometry.geom_type);
@@ -192,13 +194,13 @@ struct MeshcatUrdfVisualizer {
         // printf("mesh filename=%s\n", v.geom_meshfilename.c_str());
         std::string obj_data;
 
-        FILE *fp =
+        FILE* fp =
             fopen((m_path_prefix + v.geometry.mesh.file_name).c_str(), "r");
         if (fp) {
           fseek(fp, 0, SEEK_END);
-          int datasize = (int)ftell(fp);
+          int datasize = (int) ftell(fp);
           fseek(fp, 0, SEEK_SET);
-          char *data = static_cast<char *>(malloc(datasize + 1));
+          char* data = static_cast<char*>(malloc(datasize + 1));
           if (data) {
             int bytesRead;
             bytesRead = fread(data, 1, datasize, fp);
@@ -230,15 +232,32 @@ struct MeshcatUrdfVisualizer {
             send_zmq(m_sock, cmd);
           }
         }
+      } else if (v.geometry.geom_type == tds::TINY_BOX_TYPE) {
+        double pos[3] = {Algebra::to_double(v.origin_xyz.x()),
+                         Algebra::to_double(v.origin_xyz.y()),
+                         Algebra::to_double(v.origin_xyz.z())};
+        int rgb_hex =
+            int(Algebra::to_double(v.material.material_rgb.x()) * 255) * 65536 +
+                int(Algebra::to_double(v.material.material_rgb.y()) * 255) * 256
+                +
+                    int(Algebra::to_double(v.material.material_rgb.z()) * 255);
+        nlohmann::json box_cmd = create_box_cmd(
+            Algebra::to_double(v.geometry.box.extents.x()),
+            Algebra::to_double(v.geometry.box.extents.y()),
+            Algebra::to_double(v.geometry.box.extents.z()),
+            pos, rgb_hex, vis_name.c_str());
+        send_zmq(m_sock, box_cmd);
       }
 
       visual_instance_uids.push_back(m_uid);
+      std::cout << "\nPUSHING BACK " << m_uid << "\n";
+      std::cout << "SIZE= " << visual_instance_uids.size() << "\n";
       m_b2vis[m_uid++] = b2v;
     }
   }
 
-  void convert_visuals(TinyUrdfStructures &urdf,
-                       const std::string &texture_path, TinyMultiBody* body) {
+  void convert_visuals(TinyUrdfStructures& urdf,
+                       const std::string& texture_path, TinyMultiBody* body) {
     load_texture(texture_path);
 
     m_link_name_to_index.clear();
@@ -247,20 +266,35 @@ struct MeshcatUrdfVisualizer {
       std::string link_name = urdf.base_links[0].link_name;
       m_link_name_to_index[link_name] = link_index;
       std::vector<int> indices;
-      convert_link_visuals(urdf.base_links[0], link_index, false, body? body->visual_instance_uids() : indices);
-      
+      convert_link_visuals(urdf.base_links[0],
+                           link_index,
+                           false,
+                           body ? body->visual_instance_uids() : indices);
     }
 
-    for (int link_index = 0; link_index < (int)urdf.links.size();
+    for (int link_index = 0; link_index < (int) urdf.links.size();
          link_index++) {
       std::string link_name = urdf.links[link_index].link_name;
       m_link_name_to_index[link_name] = link_index;
       std::vector<int> indices;
-      convert_link_visuals(urdf.links[link_index], link_index, false, body? body->links_[link_index].visual_instance_uids : indices);
+      std::cout << "before function = " <<
+        body->links_[link_index].visual_instance_uids.size() << "\n";
+      convert_link_visuals(urdf.links[link_index],
+                           link_index,
+                           false,
+                           body ? body->links_[link_index].visual_instance_uids
+                                : indices);
+      std::cout << "after function = " <<
+        body->links_[link_index].visual_instance_uids.size() << "\n";
     }
+    std::cout << body << "\n";
+    std::cout << "OUTSIDE SIZE= " << body->links_[0].visual_instance_uids.size() << "\n";
+    std::cout << "OUTSIDE SIZE= " << body->links_[1].visual_instance_uids.size() << "\n";
   }
 
-  void sync_visual_transforms(const TinyMultiBody *body) {
+  void sync_visual_transforms(const TinyMultiBody* body) {
+//    std::cout << "IN FUNCTION!!!\n";
+//    std::cout << body << "\n";
     // sync base transform
     for (int v = 0; v < body->visual_instance_uids().size(); v++) {
       int visual_id = body->visual_instance_uids()[v];
@@ -269,45 +303,64 @@ struct MeshcatUrdfVisualizer {
         Transform geom_X_world =
             body->base_X_world() * body->X_visuals()[v];
 
-        const Matrix3x3 &m =
+        const Matrix3x3& m =
             geom_X_world.rotation;
 
-        const TinyVisualLinkInfo &viz = m_b2vis.at(visual_id);
+        const TinyVisualLinkInfo& viz = m_b2vis.at(visual_id);
         // printf("vis_name=%s\n", viz.vis_name.c_str());
-        double world_pos[3] = {geom_X_world.translation.getX(),
-                               geom_X_world.translation.getY(),
-                               geom_X_world.translation.getZ()};
-        double world_mat[9] = {m.getRow(0)[0], m.getRow(1)[0], m.getRow(2)[0],
-                               m.getRow(0)[1], m.getRow(1)[1], m.getRow(2)[1],
-                               m.getRow(0)[2], m.getRow(1)[2], m.getRow(2)[2]};
+        double world_pos[3] = {
+            Algebra::to_double(geom_X_world.translation[0]),
+            Algebra::to_double(geom_X_world.translation[1]),
+            Algebra::to_double(geom_X_world.translation[2])};
+        double world_mat[9] = {
+            Algebra::to_double(m(0, 0)),
+            Algebra::to_double(m(1, 0)),
+            Algebra::to_double(m(2, 0)),
+            Algebra::to_double(m(0, 1)),
+            Algebra::to_double(m(1, 1)),
+            Algebra::to_double(m(2, 1)),
+            Algebra::to_double(m(0, 2)),
+            Algebra::to_double(m(1, 2)),
+            Algebra::to_double(m(2, 2))};
         nlohmann::json tr_cmd =
             create_transform_cmd(world_pos, world_mat, viz.vis_name.c_str());
         send_zmq(m_sock, tr_cmd);
+        std::cout << "sending base\n";
       }
     }
 
     for (int l = 0; l < body->links().size(); l++) {
+//      std::cout << "IN LOOP!!! size=" << body->links()[l].visual_instance_uids.size() << std::endl;
       for (int v = 0; v < body->links()[l].visual_instance_uids.size(); v++) {
+//        std::cout << "IN LOOP!!!\n";
         int visual_id = body->links()[l].visual_instance_uids[v];
         if (m_b2vis.find(visual_id) != m_b2vis.end()) {
           Quaternion rot;
           Transform geom_X_world =
               body->links()[l].X_world * body->links()[l].X_visuals[v];
-          
-          const Matrix3x3 &m =
+
+          const Matrix3x3& m =
               geom_X_world.rotation;
-          const TinyVisualLinkInfo &viz = m_b2vis.at(visual_id);
+          const TinyVisualLinkInfo& viz = m_b2vis.at(visual_id);
           // printf("vis_name=%s\n", viz.vis_name.c_str());
           double world_mat[9] = {
-              m.getRow(0)[0], m.getRow(1)[0], m.getRow(2)[0],
-              m.getRow(0)[1], m.getRow(1)[1], m.getRow(2)[1],
-              m.getRow(0)[2], m.getRow(1)[2], m.getRow(2)[2]};
-          double world_pos[3] = {geom_X_world.translation.getX(),
-                                 geom_X_world.translation.getY(),
-                                 geom_X_world.translation.getZ()};
+              Algebra::to_double(m(0, 0)),
+              Algebra::to_double(m(1, 0)),
+              Algebra::to_double(m(2, 0)),
+              Algebra::to_double(m(0, 1)),
+              Algebra::to_double(m(1, 1)),
+              Algebra::to_double(m(2, 1)),
+              Algebra::to_double(m(0, 2)),
+              Algebra::to_double(m(1, 2)),
+              Algebra::to_double(m(2, 2))};
+          double world_pos[3] = {
+              Algebra::to_double(geom_X_world.translation[0]),
+              Algebra::to_double(geom_X_world.translation[1]),
+              Algebra::to_double(geom_X_world.translation[2])};
           nlohmann::json tr_cmd =
               create_transform_cmd(world_pos, world_mat, viz.vis_name.c_str());
           send_zmq(m_sock, tr_cmd);
+          std::cout << "SENDING!!!\n";
         }
       }
     }
